@@ -1,3 +1,7 @@
+> [!NOTE]
+> This project is on halt.  
+> I will write out some requrements later and plan this OS out.
+
 # TestOS
 
 This will be a very simple test OS (it won't be able to do much beyond minimal IO and running programs)
