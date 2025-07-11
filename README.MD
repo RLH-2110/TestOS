@@ -23,3 +23,11 @@ currently, shutdown does not work everywhere. You might get an error about APM.
   
 The plan is to expand the OS to allow running of programs from disks (probably floppy)  
 I might decide to support fat 12
+
+# Planned features
+
+Ability to insert floppy disks.
+Ability to controll hard drives.
+Minimal CLI
+Ability to run programms.
+VGA support
