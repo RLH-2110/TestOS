@@ -410,6 +410,11 @@ cmd_help:
 jmp main
 
 cmd_reboot:
+	; https://delorie.com/djgpp/doc/rbinter/id/79/22.html#:~:text=disk%20have%20a%20valid%20boot,0000h%20at%200040h%3A0072h%20before%20jumping
+	mov ax, 0040h
+	mov ds, ax
+	mov word [0072h], 1234h
+
 	jmp 0xFFFF:0000
 jmp main
 
