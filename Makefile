@@ -7,7 +7,7 @@
 
 # Variables
 NASM = nasm
-NASM_FLAGS = -f bin -l boot.lst
+NASM_FLAGS = -f bin
 OUTPUT = boot.img
 
 # Targets
@@ -29,10 +29,10 @@ $(OUTPUT): boot.bin stage2.bin README.MD
 	sudo umount ./tmp
 
 boot.bin: boot.asm
-	$(NASM) $(NASM_FLAGS) -o $@ $^
+	$(NASM) $(NASM_FLAGS) -o $@ $^ -l boot.lst
 
 stage2.bin: stage2.asm
-	$(NASM) $(NASM_FLAGS) -o $@ $^
+	$(NASM) $(NASM_FLAGS) -o $@ $^ -l stage2.lst
 
 clean:
 	rm -rf ./tmp

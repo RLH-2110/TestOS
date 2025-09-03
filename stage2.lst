@@ -1,0 +1,345 @@
+     1                                  [org 7E00h]
+     2                                  ; more data:
+     3                                  
+     4                                  new_sector_signature:
+     5 00000000 9812                    dw 1298h
+     6                                  
+     7                                  start: ; fixed start point right after signature (address: 7E02)
+     8 00000002 E9C200                  jmp main
+     9                                  
+    10                                  str_ready:
+    11 00000005 0D0A52445900            db 0dh,0ah,'RDY',0
+    12                                  
+    13                                  str_colon:
+    14 0000000B 3A2000                  db ": ",0
+    15                                  str_reboot:
+    16 0000000E 5245424F4F5400          db "REBOOT",0
+    17                                  str_echo:
+    18 00000015 4543484F00              db "ECHO",0
+    19                                  str_help:
+    20 0000001A 48454C5000              db "HELP",0
+    21                                  str_unknown:
+    22 0000001F 554E4B4F574E20434F-     db "UNKOWN COMMAND! TYPE HELP FOR HELP.",0
+    22 00000028 4D4D414E4421205459-
+    22 00000031 50452048454C502046-
+    22 0000003A 4F522048454C502E00 
+    23                                  
+    24                                  str_help_text:
+    25 00000043 48454C50202D205448-     db "HELP - THIS MESSAGE",0ah,0dh,
+    25 0000004C 4953204D4553534147-
+    25 00000055 450A0D             
+    26 00000058 4543484F202D204543-     db "ECHO - ECHOS TEXT (NO COMMAND LINE ARGUMENTS!!)",0ah,0dh,
+    26 00000061 484F53205445585420-
+    26 0000006A 284E4F20434F4D4D41-
+    26 00000073 4E44204C494E452041-
+    26 0000007C 5247554D454E545321-
+    26 00000085 21290A0D           
+    27 00000089 5245424F4F54202D20-     db "REBOOT - REBOOTS PC",0ah,0dh,0
+    27 00000092 5245424F4F54532050-
+    27 0000009B 430A0D00           
+    28                                  
+    29                                  string_input:
+    30 0000009F 00<rep 28h>             times 40 db 0 ; for storeing strings (null terminated)
+    31                                  
+    32                                  ; main entry
+    33                                  main:
+    34                                  
+    35                                  
+    36 000000C7 B8[0500]                mov ax, str_ready
+    37 000000CA 50                      push ax
+    38 000000CB E83201                  call puts
+    39 000000CE 83C402                  add sp, 2
+    40                                  
+    41                                  
+    42 000000D1 B8[9F00]                mov ax,string_input
+    43 000000D4 50                      push ax
+    44 000000D5 B82700                  mov ax,39
+    45 000000D8 50                      push ax
+    46 000000D9 E84401                  call read_string
+    47 000000DC 83C404                  add sp, 4
+    48                                  
+    49                                  ; print newline
+    50 000000DF B80D0E                  mov ax,0e0dh
+    51 000000E2 CD10                    int 10h
+    52 000000E4 B00A                    mov al, 0ah
+    53 000000E6 CD10                    int 10h
+    54                                  
+    55                                  ; pare commands
+    56                                  
+    57                                  	; help 
+    58 000000E8 B8[9F00]                	mov ax, string_input
+    59 000000EB 50                      	push ax
+    60 000000EC B8[1A00]                	mov ax, str_help
+    61 000000EF 50                      	push ax
+    62 000000F0 B80500                  	mov ax, 5
+    63 000000F3 50                      	push ax
+    64 000000F4 E88701                  	call memcmp
+    65 000000F7 83C406                  	add sp,6
+    66 000000FA 83F800                  	cmp ax,0
+    67 000000FD 7468                    	je cmd_help
+    68                                  	
+    69                                  	
+    70                                  	; echo 
+    71 000000FF B8[9F00]                	mov ax, string_input
+    72 00000102 50                      	push ax
+    73 00000103 B8[1500]                	mov ax, str_echo
+    74 00000106 50                      	push ax
+    75 00000107 B80500                  	mov ax, 5
+    76 0000010A 50                      	push ax
+    77 0000010B E87001                  	call memcmp
+    78 0000010E 83C406                  	add sp,6
+    79 00000111 83F800                  	cmp ax,0
+    80 00000114 7423                    	je cmd_echo
+    81                                  
+    82                                  	; reboot 
+    83 00000116 B8[9F00]                	mov ax, string_input
+    84 00000119 50                      	push ax
+    85 0000011A B8[0E00]                	mov ax, str_reboot
+    86 0000011D 50                      	push ax
+    87 0000011E B80700                  	mov ax, 7
+    88 00000121 50                      	push ax
+    89 00000122 E85901                  	call memcmp
+    90 00000125 83C406                  	add sp,6
+    91 00000128 83F800                  	cmp ax,0
+    92 0000012B 7447                    	je cmd_reboot
+    93                                  	
+    94 0000012D B8[1F00]                	mov ax,str_unknown
+    95 00000130 50                      	push ax
+    96 00000131 E8CC00                  	call puts
+    97 00000134 83C402                  	add sp,2
+    98                                  	
+    99 00000137 EB8E                    jmp main
+   100                                  
+   101                                  
+   102                                  cmd_echo:
+   103 00000139 B8[0B00]                	mov ax,str_colon
+   104 0000013C 50                      	push ax
+   105 0000013D E8C000                  	call puts
+   106 00000140 83C402                  	add sp, 2
+   107                                  
+   108 00000143 B8[9F00]                	mov ax, string_input
+   109 00000146 50                      	push ax
+   110 00000147 B82700                  	mov ax, 39
+   111 0000014A 50                      	push ax
+   112 0000014B E8D200                  	call read_string
+   113 0000014E 83C404                  	add sp, 4
+   114                                  	
+   115                                  	; print newline
+   116 00000151 B80D0E                  	mov ax,0e0dh
+   117 00000154 CD10                    	int 10h
+   118 00000156 B00A                    	mov al, 0ah
+   119 00000158 CD10                    	int 10h
+   120                                  
+   121 0000015A B8[9F00]                	mov ax,string_input
+   122 0000015D 50                      	push ax 
+   123 0000015E E89F00                  	call puts
+   124 00000161 83C402                  	add sp,2
+   125 00000164 E960FF                  jmp main
+   126                                  
+   127                                  cmd_help:
+   128 00000167 B8[4300]                	mov ax,str_help_text
+   129 0000016A 50                      	push ax
+   130 0000016B E89200                  	call puts
+   131 0000016E 83C402                  	add sp,2
+   132 00000171 E953FF                  jmp main
+   133                                  
+   134                                  cmd_reboot:
+   135                                  	; https://delorie.com/djgpp/doc/rbinter/id/79/22.html#:~:text=disk%20have%20a%20valid%20boot,0000h%20at%200040h%3A0072h%20before%20jumping
+   136 00000174 B84000                  	mov ax, 0040h
+   137 00000177 8ED8                    	mov ds, ax
+   138 00000179 C70672003412            	mov word [0072h], 1234h
+   139                                  
+   140 0000017F EA0000FFFF              	jmp 0xFFFF:0000
+   141 00000184 E940FF                  jmp main
+   142                                  
+   143                                  
+   144 00000187 FF<rep 79h>             times 1*512-($-$$) db 0xFF 
+   145                                  
+   146                                  ; subroutines
+   147                                  
+   148                                  ; (this is duplicated, so we dont need to interact with the bootloader)
+   149                                  ; prints out a string and adds a new line
+   150                                  ; arg1: string pointer
+   151                                  ; returns: 0E00h
+   152                                  puts:
+   153 00000200 55                      	push bp      ; Preserve current frame pointer
+   154 00000201 89E5                    	mov  bp, sp  ; Create new frame pointer pointing to current stack top
+   155                                  	
+   156 00000203 9C                      	pushf
+   157 00000204 56                      	push si
+   158                                  	
+   159 00000205 8B7604                  		mov si,[bp+4] ; get first argument
+   160 00000208 FC                      		cld
+   161                                  		
+   162 00000209 B40E                    		mov ah, 0eh ; BIOS PRINT CHAR
+   163                                  		
+   164                                  		.print_loop:
+   165 0000020B AC                      			lodsb ; load al with [si] and inc si
+   166 0000020C 3C00                    			cmp al,0 ; is null terminator?
+   167 0000020E 7404                    			jz .print_done 
+   168                                  
+   169 00000210 CD10                    			int 10h ; BIOS PRINT CHAR
+   170 00000212 EBF7                    		jmp .print_loop
+   171                                  
+   172                                  	.print_done:
+   173                                  	
+   174                                  	; print newline
+   175 00000214 B00D                    	mov al,0dh
+   176 00000216 CD10                    	int 10h
+   177 00000218 B00A                    	mov al, 0ah
+   178 0000021A CD10                    	int 10h
+   179                                  	
+   180 0000021C 9D                      	popf
+   181 0000021D 5E                      	pop si
+   182 0000021E 5D                      	pop bp
+   183 0000021F C3                      	ret
+   184                                  
+   185                                  
+   186                                  ; reads string into buffer
+   187                                  ; arg1: buffer to read into
+   188                                  ; arg2: buffer size - 1
+   189                                  ; returns: ??? just ignore return value
+   190                                  read_string:
+   191 00000220 55                      	push bp	
+   192 00000221 89E5                    	mov bp,sp
+   193                                  
+   194 00000223 56                      	push si
+   195                                  
+   196                                  	;setup
+   197 00000224 8A6E04                  	mov ch,[bp+4] ; max chars that can be read (places null-terminator after)
+   198 00000227 B400                    	mov ah,0 ; KEYBOARD WAIT AND READ
+   199 00000229 8B7606                  	mov si,[bp+6] ; get address of buffer to write to
+   200                                  
+   201 0000022C B100                    	mov cl,0
+   202                                  
+   203                                  	.read:
+   204                                  
+   205 0000022E B400                    		mov ah,00h
+   206 00000230 CD16                    		int 16h ; KEYBOARD WAIT AND READ (result in al)
+   207                                  		
+   208 00000232 3C0D                    		cmp al,0dh ; if enter key
+   209 00000234 7442                    		je .end
+   210                                  			
+   211 00000236 3C08                    		cmp al,08h ; if backspace
+   212 00000238 7413                    		je .backspace
+   213                                  
+   214 0000023A 80FD00                  		cmp ch,0
+   215 0000023D 74EF                    		je .read ; if we cant write more chars, then user must delete chars or commit with enter
+   216                                  
+   217                                  		; if (maybe) lower case
+   218 0000023F 3C61                    		cmp al,'a' ; if al >= 'a'
+   219 00000241 7328                    		jnc .force_upper
+   220                                  
+   221                                  		.save:		
+   222 00000243 E82D00                  		call .print_char; print char on screen (not cdecl)
+   223                                  
+   224 00000246 8804                    		mov BYTE [si],al ; save char
+   225 00000248 46                      		inc si ; inc pointer
+   226 00000249 FECD                    		dec ch ; dec max allowed chars
+   227                                  
+   228 0000024B EBE1                    		jmp .read ; skip the sub routines and go to .end
+   229                                  
+   230                                  	.backspace:
+   231 0000024D 4E                      		dec si ; decrement pointer
+   232                                  		
+   233                                  		; if si is smaller than the start of the buffer
+   234 0000024E 81FE[9F00]              		cmp si, string_input
+   235 00000252 7214                    		jc .backspace_fix	
+   236                                  
+   237                                  
+   238 00000254 FEC5                    		inc ch ; inc max allowed chars		
+   239                                  
+   240                                  		; the block removes the last character from the screen
+   241                                  
+   242                                  		;print backspace (WE NEED TO PRINT SOMETHING, else it breaks)
+   243 00000256 E81A00                  		call .print_char ;(not cdecl)
+   244                                  		;print space
+   245 00000259 B020                    		mov al,20h
+   246 0000025B E81500                  		call .print_char ;(not cdecl)
+   247                                  		;print backspace
+   248 0000025E B008                    		mov al,08
+   249 00000260 E81000                  		call .print_char ;(not cdecl)
+   250                                  	
+   251 00000263 C60400                  		mov BYTE [si],0 ; write null-terminator at the new string end
+   252                                  		
+   253 00000266 EBC6                    		jmp .read
+   254                                  
+   255                                  	
+   256                                  
+   257                                  	.backspace_fix: ; user tried backspace emptry string
+   258                                  	
+   259 00000268 46                      		inc si ;undo changes
+   260 00000269 EBC3                    		jmp .read
+   261                                  
+   262                                  
+   263                                  	.force_upper:
+   264                                  		
+   265                                  		; check if letter
+   266 0000026B 3C7B                    		cmp al,'z'+1 ; if al > z
+   267 0000026D 73D4                    		jnc .save ; not a letter, return
+   268                                  		
+   269                                  		; make upper case!
+   270 0000026F 2C20                    		sub al,20h ; difference between lower and upper case
+   271 00000271 EBD0                    	jmp .save
+   272                                  
+   273                                  	.print_char: ;(not cdecl)
+   274 00000273 B40E                    		mov ah,0eh
+   275 00000275 CD10                    		int 10h ; BIOS PRINT CHAR
+   276 00000277 C3                      	ret
+   277                                  
+   278                                  
+   279                                  	.end:
+   280 00000278 C60400                  		mov BYTE [si],0 ; put null terminator
+   281                                  
+   282 0000027B 5E                      	pop si
+   283 0000027C 5D                      	pop bp
+   284 0000027D C3                      ret	
+   285                                  	
+   286                                  
+   287                                  ; compares two memory regions for arg3 bytes
+   288                                  ; arg1: start of memory to compare
+   289                                  ; arg2: start of the other memory we will compare to
+   290                                  ; arg3: amount of characters to compare
+   291                                  ; returns: 0 if equal | < 0 if str1 is less than str2 | > 0 if str2 is less than str1
+   292                                  memcmp:
+   293 0000027E 55                      	push bp
+   294 0000027F 89E5                    	mov bp,sp
+   295                                  
+   296 00000281 56                      	push si
+   297 00000282 57                      	push di
+   298 00000283 9C                      	pushf
+   299                                  	
+   300 00000284 8B7608                  	mov si,[bp+8] ; get arg1
+   301 00000287 8B7E06                  	mov di,[bp+6] ; get arg2
+   302 0000028A 8B4E04                  	mov cx,[bp+4] ; get arg3
+   303 0000028D 31C0                    	xor ax,ax ; set return value to 0
+   304                                  	
+   305 0000028F 83F900                  	cmp cx,0 ; if size == 0, return 0
+   306 00000292 7412                    	je .end
+   307                                  	
+   308 00000294 FC                      	cld
+   309                                  	
+   310                                  	.loop:
+   311 00000295 A6                      		cmpsb ; cmp [si],[di]
+   312 00000296 7206                    		jc .str2_bigger
+   313 00000298 7509                    		jnz .str1_bigger
+   314 0000029A E2F9                    	loop .loop
+   315                                  	
+   316 0000029C EB08                    	jmp .end
+   317                                  	.str2_bigger:
+   318 0000029E B8FFFF                  		mov ax,-1
+   319 000002A1 EB03                    		jmp .end
+   320                                  		
+   321                                  	.str1_bigger:
+   322 000002A3 B80100                  		mov ax,1
+   323                                  		
+   324                                  	.end:
+   325                                  	
+   326 000002A6 9D                      	popf 
+   327 000002A7 5F                      	pop di
+   328 000002A8 5E                      	pop si
+   329 000002A9 5D                      	pop bp
+   330 000002AA C3                      ret
+   331                                  
+   332                                  
+   333 000002AB FF<rep 155h>            times 2*512-($-$$) db 0xFF 

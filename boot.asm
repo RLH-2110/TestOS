@@ -3,6 +3,7 @@
 ; max size: 9 sectors/track × 40 * 2 tracks
 
 start:
+
 jmp start_real
 nop
 
@@ -75,29 +76,19 @@ xor ax,ax
 mov ds,ax
 mov es,ax
 
-mov ah,09
-mov al,'H'
-int 10h
-mov al,'i'
-int 10h
-
-
-jmp $
-
 mov [boot_disk],dl ; dl is initalized to the current disk number, we want to save that now
 
 mov si,str_welcome
 call puts
 
-
 ; read the root directory
 mov ah,2 ; interupt code for: Read Disk Sectors
 mov al,1	;AL = number of sectors to read	(1-128 dec.)
 mov ch,0	;CH = track/cylinder number  (0-39)
-mov cl,5	;CL = sector number  (1-9 dec.)
+mov cl,6	;CL = sector number  (1-9 dec.)
 mov dh,0	;DH = head number  (0-1 dec.)
 mov dl,[boot_disk]	;DL = drive number (0=A:, 1=2nd floppy, 80h=drive 0, 81h=drive 1)
-mov bx,9000h	;ES:BX = pointer to buffer  (this one points to the next sector, so we can access stuff as if they where continuous)
+mov bx,7E00h;ES:BX = pointer to buffer  (this one points to the next sector, so we can access stuff as if they where continuous)
 int 13h ;Read Disk Sectors
 	;AL = number of sectors read
 	;CF = 0 if successful
@@ -121,11 +112,21 @@ je .two_checks_done
 .two_checks_done:
 
 ; search for stage 2
-mov si,0E00h
+mov si,7E00h
 mov dx,0
 
 .find:
 	inc dx
+
+	; debug print
+	push si
+	push ax
+	push cx
+	call puts2
+	pop cx
+	pop ax
+	pop si
+
 	call memcmp
 	jz found
 
@@ -140,24 +141,48 @@ mov dx,0
 
 found:
 
+
 add si,1Ah ; starting cluster offset
-mov  cl,6 ; first cluster
-add cl,[si]
+mov cx,7 - 3   ; sector of first cluster - 3 (because first cluster is 3 since 1 and 2 are special) (also set ch to 0)
+add cl,[si] ; add the cluster number (starts at 0)
 
-cmp cl,9
-jg stage2_not_found
+.adjust_track:
+	cmp cl,10
+	jc .right_format
 
-mov si,str_welcome
-call puts
-jmp $
+	sub cl,9
+	inc ch
+	jmp .adjust_track
 
-; read the root directory
+.right_format:
+
+mov ah,0eh
+mov al,cl
+add al,30h
+int 10h
+mov al,0ah
+int 10h
+mov al,0dh
+int 10h
+
+mov ah,0eh
+mov al,ch
+add al,30h
+int 10h
+mov al,0ah
+int 10h
+mov al,0dh
+int 10h
+
+
+; read stage 2
 mov ah,2 ; interupt code for: Read Disk Sectors
 mov al,1	;AL = number of sectors to read	(1-128 dec.)
-mov ch,0	;CH = track/cylinder number  (0-39)
+;mov ch,1	;CH = track/cylinder number  (0-39)
+;mov cl,1	;CL = sector number  (1-9 dec.)
 mov dh,0	;DH = head number  (0-1 dec.)
 mov dl,[boot_disk]	;DL = drive number (0=A:, 1=2nd floppy, 80h=drive 0, 81h=drive 1)
-mov bx,9000h	;ES:BX = pointer to buffer  (this one points to the next sector, so we can access stuff as if they where continuous)
+mov bx,7E00h;ES:BX = pointer to buffer  (this one points to the next sector, so we can access stuff as if they where continuous)
 int 13h ;Read Disk Sectors
 	;AL = number of sectors read
 	;CF = 0 if successful
@@ -220,13 +245,38 @@ puts:
 	
 	ret
 
+; prints out 11 chars
+; arg1: string pointer
+; returns: 0E00h
+puts2:
+	push si
+
+	cld	
+	
+	mov ah, 0eh ; BIOS PRINT CHAR
+	mov cx, 11
+
+	.print_loop:
+		lodsb ; load al with [si] and inc si
+		int 10h ; BIOS PRINT CHAR
+	loop .print_loop
+	
+	; print newline
+	mov al,0dh
+	int 10h
+	mov al, 0ah
+	int 10h
+	
+	pop si
+	ret
+
 
 ; si: string to compare against
 ; will always comapare against str_stage2
 ; will always compare 11 bytes
 ; Z if equal NZ if not equal
 memcmp:
-	
+	push si
 	mov di,str_stage2
 	mov cx,11
 
@@ -238,7 +288,7 @@ memcmp:
 	loop .loop
 	
 	.end:
-	
+	pop si
 ret
 
 
