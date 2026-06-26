@@ -5,7 +5,7 @@
 	* (optional) fat32 support
 	
 * basic command line interface
-	* included commands: copy, move, reboot, cd, dir, alias, type, pause, echo, format
+	* included commands: copy, move, reboot, cd, dir, alias, type, pause, echo, format, del, cls
 	* included progamms: edit
 	* the user should be able to load custom progamms
 	
@@ -19,5 +19,6 @@
 * try to find an open source assembler to port to testOS
 
 
-* allow primitive drivers with pointers to routines and mapping to driver letters.
-  
+* allow primitive drivers working by letting them regsister functions to drive letters via pointers or something like that?
+* support an autoexec
+* (optinal, think more about it) allow programs to return control to TestOS, without ending the program???
